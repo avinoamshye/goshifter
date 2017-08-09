@@ -103,6 +103,8 @@ def enrichPermRandBoundryPeakShift_tabixLd(snpInfoChr,tabixDir,r2min,window,expa
             ldInfo = getLdInfoProxyFinderFile(snpInfoChr,flatld,window,r2min)
         else:
             ldInfo = getLdInfoTabix(snpInfoChr,tabixDir,window,r2min)
+            
+    
     
     snpPeakInfo, ldsnpPeakInfo = permRandBoundryPeakShift(snpInfoChr,peaksTree,ldInfo,expand,minShift,maxShift,nPerm)
     overlapPerm(snpPeakInfo,ldsnpPeakInfo,snpInfoChr,fOut,nPerm,ldInfo)
@@ -325,9 +327,14 @@ def permRandBoundryPeakShift(snpInfoChr,peaksTree,ldInfo,expand,minShift,maxShif
                     snpPeakInfo[n].setdefault(snp,0)
 
                 continue
+                
+            maxlim = bounds[chrom][snp]['maxbp']
+            if type(maxlim) == dict: maxlim = maxlim['bp']
+            maxbp = maxlim + expand
             
-            maxbp = bounds[chrom][snp]['maxbp'] + expand
-            minbp = bounds[chrom][snp]['minbp'] - expand
+            minlim = bounds[chrom][snp]['minbp']
+            if type(minlim) == dict: minlim = minlim['bp']
+            minbp = minlim - expand
             
             if minShift == "False" or maxShift == "False":
                 #shift by random value within the size of the region
@@ -353,7 +360,9 @@ def permRandBoundryPeakShift(snpInfoChr,peaksTree,ldInfo,expand,minShift,maxShif
 
                 # shift ldsnps
                 for ldsnp in ldInfo[snp]:
-                    ldbp = ldInfo[snp][ldsnp]['bp2'] + shiftVal
+                    bp2 = ldInfo[snp][ldsnp]['bp2']
+                    if type(bp2) == dict: bp2 = bp2['bp']
+                    ldbp = bp2 + shiftVal
                     
                     
                     # check if shifted snp maps outside ld boundries
@@ -416,8 +425,12 @@ def peaks2region(bounds,peaksTree,expand):
     for chrom in bounds:
         for snp in bounds[chrom]:
             peaksToSnp.setdefault(snp,[])
-            minbp = bounds[chrom][snp]['minbp'] - expand
-            maxbp = bounds[chrom][snp]['maxbp'] + expand
+            minlim = bounds[chrom][snp]['minbp']
+            if type(minlim) == dict: minlim = minlim['bp']
+            minbp = minlim - expand
+            maxlim = bounds[chrom][snp]['maxbp']
+            if type(maxlim) == dict: maxlim = maxlim['bp']
+            maxbp = maxlim + expand
             peaks = peaksTree.find(chrom,minbp,maxbp)
             for peak in peaks:
                 sta = peak[0]
